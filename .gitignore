@@ -1,0 +1,4 @@
+data/*.jsonl
+output/daily_project_metrics.json
+output/session_overview.json
+output/sessions/*.json

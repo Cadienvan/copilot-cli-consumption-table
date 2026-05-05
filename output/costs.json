@@ -1,0 +1,110 @@
+{
+  "claude-sonnet-4.6": {
+    "costInput": 3,
+    "costOutput": 15,
+    "costInputCached": 0.3,
+    "costWriteCached": 3.75
+  },
+  "claude-opus-4.6": {
+    "costInput": 15,
+    "costOutput": 75,
+    "costInputCached": 1.5,
+    "costWriteCached": 18.75
+  },
+  "claude-opus-4.7": {
+    "costInput": 15,
+    "costOutput": 75,
+    "costInputCached": 1.5,
+    "costWriteCached": 18.75
+  },
+  "claude-haiku-4.5": {
+    "costInput": 0.8,
+    "costOutput": 4,
+    "costInputCached": 0.08,
+    "costWriteCached": 1
+  },
+  "gpt-5.4": {
+    "costInput": 2.5,
+    "costOutput": 10,
+    "costInputCached": 1.25,
+    "costWriteCached": 2.5
+  },
+  "gpt-5.3-codex": {
+    "costInput": 0.15,
+    "costOutput": 0.6,
+    "costInputCached": 0.075,
+    "costWriteCached": 0.15
+  },
+  "gpt-5-mini": {
+    "costInput": 0,
+    "costOutput": 0,
+    "costInputCached": 0,
+    "costWriteCached": 0
+  },
+  "qwen3.6:27b-q4_K_M": {
+    "costInput": 0,
+    "costOutput": 0,
+    "costInputCached": 0,
+    "costWriteCached": 0
+  },
+  "laguna-xs.2": {
+    "costInput": 0,
+    "costOutput": 0,
+    "costInputCached": 0,
+    "costWriteCached": 0
+  },
+  "laguna-xs.2:q4_K_M": {
+    "costInput": 0,
+    "costOutput": 0,
+    "costInputCached": 0,
+    "costWriteCached": 0
+  },
+  "deepseek-coder-v2:16b": {
+    "costInput": 0,
+    "costOutput": 0,
+    "costInputCached": 0,
+    "costWriteCached": 0
+  },
+  "gemma3:4b": {
+    "costInput": 0,
+    "costOutput": 0,
+    "costInputCached": 0,
+    "costWriteCached": 0
+  },
+  "gemma4:31b": {
+    "costInput": 0,
+    "costOutput": 0,
+    "costInputCached": 0,
+    "costWriteCached": 0
+  },
+  "qwen3.6": {
+    "costInput": 0,
+    "costOutput": 0,
+    "costInputCached": 0,
+    "costWriteCached": 0
+  },
+  "qwen3.6:27b-coding-nvfp4": {
+    "costInput": 0,
+    "costOutput": 0,
+    "costInputCached": 0,
+    "costWriteCached": 0
+  },
+  "qwen3.6:35b-a3b-q4_K_M": {
+    "costInput": 0,
+    "costOutput": 0,
+    "costInputCached": 0,
+    "costWriteCached": 0
+  },
+  "Opus4.7-GODs.Ghost.Codex-4B.GGuF:Q4_K_M": {
+    "costInput": 0,
+    "costOutput": 0,
+    "costInputCached": 0,
+    "costWriteCached": 0
+  },
+  "Qwen3.6-35B-A3B-Q4_K_M-GGUF:Q4_K_M": {
+    "costInput": 0,
+    "costOutput": 0,
+    "costInputCached": 0,
+    "costWriteCached": 0
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "copilot-consumption-table",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "extract": "chmod +x ./extract-sessions.sh && ./extract-sessions.sh",
+    "start": "rm -rf ./output/* && rm -rf ./data/* && npm run extract && node ./src/analyze-sessions.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

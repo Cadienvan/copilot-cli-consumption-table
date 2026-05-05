@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Copilot Token & Cost Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      body {
+        font-family: -apple-system, sans-serif;
+        background: #f4f4f9;
+        padding: 20px;
+        color: #333;
+      }
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Filters & Stats (Omitted full CSS for brevity, keeping layout) */
+      .filters {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        background: #fafafa;
+        padding: 15px;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+        align-items: flex-start;
+      }
+      .filter-box {
+        display: flex;
+        flex-direction: column;
+        font-size: 0.85em;
+        font-weight: bold;
+        flex: 1;
+        min-width: 180px;
+      }
+      .filter-box .header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 4px;
+      }
+      .filter-box .header a {
+        color: #1565c0;
+        text-decoration: none;
+        font-weight: normal;
+        font-size: 0.9em;
+        cursor: pointer;
+      }
+      .filter-box input[type="date"] {
+        padding: 6px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin-top: 4px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .checkbox-list {
+        max-height: 120px;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        padding: 6px;
+        border-radius: 4px;
+        background: #fff;
+        font-weight: normal;
+      }
+      .checkbox-list label {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        margin-bottom: 4px;
+        cursor: pointer;
+        font-size: 0.95em;
+        word-break: break-all;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+      .stat-card {
+        padding: 15px;
+        background: #e3f2fd;
+        border-radius: 6px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .stat-card h3 {
+        margin: 0 0 5px 0;
+        font-size: 1.05em;
+        color: #1565c0;
+      }
+      .stat-card p {
+        margin: 0;
+        font-size: 1.3em;
+        font-weight: bold;
+      }
+      .cost-card {
+        background: #e8f5e9;
+        border: 1px solid #c8e6c9;
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .cost-card h3 {
+        color: #2e7d32;
+        margin-bottom: 5px;
+      }
+      .cost-card p {
+        font-size: 1.8em;
+        color: #1b5e20;
+        margin: 0;
+      }
+      .cost-breakdown {
+        font-size: 0.9em;
+        color: #1b5e20;
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-top: 5px;
+      }
+
+      .reasoning-toggle-container {
+        background: #fff3e0;
+        border: 1px solid #ffcc80;
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+      }
+      .reasoning-toggle-container label {
+        font-weight: bold;
+        cursor: pointer;
+        color: #e65100;
+        font-size: 1.05em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .reasoning-toggle-container small {
+        display: block;
+        margin-top: 6px;
+        color: #d84315;
+        font-size: 0.85em;
+      }
+
+      .chart-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #ddd;
+        padding-bottom: 10px;
+      }
+      .chart-tab {
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        color: #555;
+      }
+      .chart-tab.active {
+        background: #1565c0;
+        color: white;
+        border-color: #1565c0;
+      }
+
+      .toggle-btn {
+        background: #1565c0;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        margin-top: 20px;
+      }
+      .table-container {
+        margin-top: 15px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 0.9em;
+      }
+      th {
+        background: #e3f2fd;
+        padding: 10px;
+        border-bottom: 2px solid #ccc;
+        color: #1565c0;
+        position: sticky;
+        top: 0;
+      }
+      td {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .view-btn {
+        background: #4caf50;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.85em;
+      }
+      .view-btn:hover {
+        background: #388e3c;
+      }
+
+      /* MODAL STYLES */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      .modal-content {
+        background: white;
+        width: 80%;
+        max-width: 800px;
+        height: 80vh;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      }
+      .modal-header {
+        padding: 15px 20px;
+        background: #1565c0;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .modal-header h3 {
+        margin: 0;
+        font-size: 1.2em;
+      }
+      .modal-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5em;
+        cursor: pointer;
+      }
+      .modal-body {
+        padding: 20px;
+        overflow-y: auto;
+        flex: 1;
+        background: #f9f9f9;
+      }
+
+      /* TIMELINE STYLES */
+      .timeline {
+        position: relative;
+        padding-left: 30px;
+        margin-top: 10px;
+      }
+      .timeline::before {
+        content: "";
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #ccc;
+      }
+      .event {
+        position: relative;
+        margin-bottom: 20px;
+        background: white;
+        padding: 15px;
+        border-radius: 6px;
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+      .event::before {
+        content: "";
+        position: absolute;
+        left: -25px;
+        top: 15px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #1565c0;
+        border: 2px solid white;
+        box-shadow: 0 0 0 2px #ccc;
+      }
+      .event.user::before {
+        background: #42a5f5;
+      }
+      .event.assistant::before {
+        background: #ab47bc;
+      }
+      .event.tool::before {
+        background: #78909c;
+        width: 8px;
+        height: 8px;
+        left: -23px;
+      }
+
+      .event-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 0.85em;
+        color: #666;
+      }
+      .event-type {
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+      .event-content {
+        font-size: 0.95em;
+        color: #333;
+        line-height: 1.4;
+        word-break: break-word;
+      }
+
+      .spike-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: bold;
+        font-size: 0.85em;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 8px;
+        margin-right: 8px;
+      }
+      .spike-input {
+        background: #fff3e0;
+        color: #e65100;
+        border: 1px solid #ffe0b2;
+      }
+      .spike-output {
+        background: #ffebee;
+        color: #c62828;
+        border: 1px solid #ffcdd2;
+      }
+      .spike-tool {
+        background: #f3e5f5;
+        color: #6a1b9a;
+        border: 1px solid #e1bee7;
+      }
+      .compaction-event {
+        background: #e8f5e9;
+        border: 1px dashed #4caf50;
+        text-align: center;
+        color: #2e7d32;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Copilot Usage & Cost Dashboard</h2>
+
+      <div class="filters">
+        <div class="filter-box" style="flex: 0.5">
+          <div class="header"><span>Start Date</span></div>
+          <input type="date" id="dateStart" />
+          <div class="header" style="margin-top: 10px"><span>End Date</span></div>
+          <input type="date" id="dateEnd" />
+        </div>
+        <div class="filter-box">
+          <div class="header">
+            <span>Organizations</span><span><a onclick="toggleAll('orgCheckboxes', true)">All</a> | <a onclick="toggleAll('orgCheckboxes', false)">None</a></span>
+          </div>
+          <div id="orgCheckboxes" class="checkbox-list"></div>
+        </div>
+        <div class="filter-box">
+          <div class="header">
+            <span>Projects</span><span><a onclick="toggleAll('projectCheckboxes', true)">All</a> | <a onclick="toggleAll('projectCheckboxes', false)">None</a></span>
+          </div>
+          <div id="projectCheckboxes" class="checkbox-list"></div>
+        </div>
+        <div class="filter-box">
+          <div class="header">
+            <span>Models</span><span><a onclick="toggleAll('modelCheckboxes', true)">All</a> | <a onclick="toggleAll('modelCheckboxes', false)">None</a></span>
+          </div>
+          <div id="modelCheckboxes" class="checkbox-list"></div>
+        </div>
+      </div>
+
+      <div class="reasoning-toggle-container">
+        <label><input type="checkbox" id="addReasoningToggle" /> Bill Reasoning Tokens Separately</label>
+        <small>Toggle this ON to charge reasoning tokens (at output rate) on top of output cost.</small>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <h3>Input</h3>
+          <p id="totalInput">0</p>
+        </div>
+        <div class="stat-card">
+          <h3>Output</h3>
+          <p id="totalOutput">0</p>
+        </div>
+        <div class="stat-card">
+          <h3>Reasoning</h3>
+          <p id="totalReasoning">0</p>
+        </div>
+        <div class="stat-card">
+          <h3>Cache Read</h3>
+          <p id="totalCacheRead">0</p>
+        </div>
+        <div class="stat-card">
+          <h3>Cache Write</h3>
+          <p id="totalCacheWrite">0</p>
+        </div>
+
+        <div class="stat-card cost-card">
+          <div>
+            <h3>Total Estimated Cost</h3>
+            <p id="totalCost">$0,0000</p>
+          </div>
+          <div class="cost-breakdown">
+            <div><strong>Input:</strong> <span id="costInUi">$0,0000</span></div>
+            <div><strong>Output:</strong> <span id="costOutUi">$0,0000</span></div>
+            <div><strong>Reasoning:</strong> <span id="costReasoningUi">$0,0000</span></div>
+            <div><strong>Cache R:</strong> <span id="costCacheReadUi">$0,0000</span></div>
+            <div><strong>Cache W:</strong> <span id="costCacheWriteUi">$0,0000</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-tabs">
+        <button class="chart-tab active" onclick="setChartTab('date')">Over Time</button>
+        <button class="chart-tab" onclick="setChartTab('org')">By Organization</button>
+        <button class="chart-tab" onclick="setChartTab('project')">By Project</button>
+        <button class="chart-tab" onclick="setChartTab('model')">By Model</button>
+      </div>
+
+      <canvas id="usageChart" width="400" height="150"></canvas>
+
+      <button id="toggleListBtn" class="toggle-btn">Show Sessions List</button>
+
+      <div id="sessionsListContainer" class="table-container" style="display: none">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Session ID</th>
+              <th>Project</th>
+              <th>Cost</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="sessionsListBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="timelineModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Session Timeline</h3>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div id="timelineContainer" class="timeline"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let rawSessions = [],
+        costsData = {},
+        chartInstance = null,
+        activeChartTab = "date",
+        currentValidMetrics = [];
+
+      function formatCurrency(amount) {
+        return "$" + amount.toLocaleString("de-DE", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+      }
+
+      async function init() {
+        try {
+          const [sessionRes, costRes] = await Promise.all([fetch("output/session_overview.json"), fetch("output/costs.json")]);
+          rawSessions = await sessionRes.json();
+          costsData = await costRes.json();
+          populateFilters();
+          renderDashboard();
+
+          document.addEventListener("change", e => {
+            if (e.target.matches(".checkbox-list input") || e.target.matches('input[type="date"]') || e.target.id === "addReasoningToggle") renderDashboard();
+          });
+          document.getElementById("toggleListBtn").addEventListener("click", toggleSessionsList);
+        } catch (e) {
+          alert("Error loading data.");
+        }
+      }
+
+      // Filter Logic...
+      function createCheckboxes(containerId, items) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = "";
+        items.forEach(item => {
+          container.innerHTML += `<label><input type="checkbox" value="${item}" checked> ${item}</label>`;
+        });
+      }
+
+      function populateFilters() {
+        const orgs = new Set(),
+          projects = new Set(),
+          models = new Set();
+        rawSessions.forEach(s => {
+          orgs.add(s.project ? s.project.split("/")[0] : "Unknown");
+          projects.add(s.project);
+          Object.keys(s.models).forEach(m => models.add(m));
+        });
+        createCheckboxes("orgCheckboxes", Array.from(orgs).sort());
+        createCheckboxes("projectCheckboxes", Array.from(projects).sort());
+        createCheckboxes("modelCheckboxes", Array.from(models).sort());
+      }
+
+      function toggleAll(containerId, isChecked) {
+        document.querySelectorAll(`#${containerId} input[type="checkbox"]`).forEach(cb => (cb.checked = isChecked));
+        renderDashboard();
+      }
+
+      function setChartTab(tab) {
+        activeChartTab = tab;
+        document.querySelectorAll(".chart-tab").forEach(btn => btn.classList.remove("active"));
+        document.querySelector(`.chart-tab[onclick="setChartTab('${tab}')"]`).classList.add("active");
+        renderChart();
+      }
+
+      // Dash rendering...
+      function renderDashboard() {
+        const fStart = document.getElementById("dateStart").value,
+          fEnd = document.getElementById("dateEnd").value;
+        const addReasoningCost = document.getElementById("addReasoningToggle").checked;
+        const selOrgs = Array.from(document.querySelectorAll("#orgCheckboxes input:checked")).map(cb => cb.value);
+        const selProjs = Array.from(document.querySelectorAll("#projectCheckboxes input:checked")).map(cb => cb.value);
+        const selModels = Array.from(document.querySelectorAll("#modelCheckboxes input:checked")).map(cb => cb.value);
+
+        let tIn = 0,
+          tOut = 0,
+          tReasoning = 0,
+          tCacheRead = 0,
+          tCacheWrite = 0;
+        let cIn = 0,
+          cOut = 0,
+          cReasoning = 0,
+          cCacheRead = 0,
+          cCacheWrite = 0;
+        currentValidMetrics = [];
+        const filteredSessions = [];
+
+        const sortedSessions = [...rawSessions].sort((a, b) => b.day.localeCompare(a.day));
+
+        sortedSessions.forEach(session => {
+          const org = session.project ? session.project.split("/")[0] : "Unknown";
+          if ((fStart && session.day < fStart) || (fEnd && session.day > fEnd) || !selOrgs.includes(org) || !selProjs.includes(session.project)) return;
+
+          let sCost = 0,
+            hasValidModels = false;
+          Object.entries(session.models).forEach(([model, metrics]) => {
+            if (!selModels.includes(model)) return;
+            hasValidModels = true;
+
+            tIn += metrics.inputTokens;
+            tOut += metrics.outputTokens;
+            tReasoning += metrics.reasoningTokens;
+            tCacheRead += metrics.cacheReadTokens;
+            tCacheWrite += metrics.cacheWriteTokens;
+
+            currentValidMetrics.push({ day: session.day, org, project: session.project, model, in: metrics.inputTokens, out: metrics.outputTokens, reason: metrics.reasoningTokens, cache: metrics.cacheReadTokens, cacheW: metrics.cacheWriteTokens });
+
+            const r = costsData[model] || { costInput: 0, costOutput: 0, costInputCached: 0, costWriteCached: 0 };
+            const costIn = (metrics.inputTokens / 1e6) * r.costInput;
+            const costOut = (metrics.outputTokens / 1e6) * r.costOutput;
+            const costCacheR = (metrics.cacheReadTokens / 1e6) * r.costInputCached;
+            const costCacheW = (metrics.cacheWriteTokens / 1e6) * (r.costWriteCached || r.costInput);
+            const costReason = addReasoningCost ? (metrics.reasoningTokens / 1e6) * r.costOutput : 0;
+
+            cIn += costIn;
+            cOut += costOut;
+            cCacheRead += costCacheR;
+            cCacheWrite += costCacheW;
+            cReasoning += costReason;
+            sCost += costIn + costOut + costCacheR + costCacheW + costReason;
+          });
+
+          if (hasValidModels) filteredSessions.push({ id: session.sessionId, date: session.day, project: session.project, cost: sCost });
+        });
+
+        document.getElementById("totalInput").innerText = tIn.toLocaleString("de-DE");
+        document.getElementById("totalOutput").innerText = tOut.toLocaleString("de-DE");
+        document.getElementById("totalReasoning").innerText = tReasoning.toLocaleString("de-DE");
+        document.getElementById("totalCacheRead").innerText = tCacheRead.toLocaleString("de-DE");
+        document.getElementById("totalCacheWrite").innerText = tCacheWrite.toLocaleString("de-DE");
+
+        document.getElementById("totalCost").innerText = formatCurrency(cIn + cOut + cCacheRead + cCacheWrite + cReasoning);
+        document.getElementById("costInUi").innerText = formatCurrency(cIn);
+        document.getElementById("costOutUi").innerText = formatCurrency(cOut);
+        document.getElementById("costReasoningUi").innerText = formatCurrency(cReasoning);
+        document.getElementById("costCacheReadUi").innerText = formatCurrency(cCacheRead);
+        document.getElementById("costCacheWriteUi").innerText = formatCurrency(cCacheWrite);
+
+        renderChart();
+        updateTable(filteredSessions);
+      }
+
+      function renderChart() {
+        const d = {};
+        currentValidMetrics.forEach(m => {
+          let k = activeChartTab === "date" ? m.day : activeChartTab === "org" ? m.org : activeChartTab === "project" ? m.project : m.model;
+          if (!d[k]) d[k] = { in: 0, out: 0, cache: 0, reason: 0, cacheW: 0 };
+          d[k].in += m.in;
+          d[k].out += m.out;
+          d[k].cache += m.cache;
+          d[k].cacheW += m.cacheW;
+          d[k].reason += m.reason;
+        });
+        const l = Object.keys(d).sort();
+        const ctx = document.getElementById("usageChart").getContext("2d");
+        if (chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: l,
+            datasets: [
+              { label: "Input", data: l.map(x => d[x].in), backgroundColor: "#42a5f5" },
+              { label: "Output", data: l.map(x => d[x].out), backgroundColor: "#66bb6a" },
+              { label: "Reasoning", data: l.map(x => d[x].reason), backgroundColor: "#ab47bc" },
+              { label: "Cache R", data: l.map(x => d[x].cache), backgroundColor: "#ffa726" },
+              { label: "Cache W", data: l.map(x => d[x].cacheW), backgroundColor: "#ff7043" },
+            ],
+          },
+          options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } },
+        });
+      }
+
+      function updateTable(arr) {
+        const tb = document.getElementById("sessionsListBody");
+        tb.innerHTML = "";
+        arr.forEach(s => {
+          tb.innerHTML += `<tr>
+                <td>${s.date}</td>
+                <td class="uuid-col">${s.id.substring(0, 8)}...</td>
+                <td>${s.project}</td>
+                <td style="font-weight: bold; color: #2e7d32;">${formatCurrency(s.cost)}</td>
+                <td><button class="view-btn" onclick="openModal('${s.id}')">View Timeline</button></td>
+            </tr>`;
+        });
+      }
+
+      function toggleSessionsList() {
+        const c = document.getElementById("sessionsListContainer"),
+          b = document.getElementById("toggleListBtn");
+        c.style.display = c.style.display === "none" ? "block" : "none";
+        b.innerText = c.style.display === "none" ? "Show Sessions List" : "Hide Sessions List";
+      }
+
+      // MODAL & TIMELINE LOGIC
+      async function openModal(sessionId) {
+        const container = document.getElementById("timelineContainer");
+        container.innerHTML = "<p>Loading timeline...</p>";
+        document.getElementById("timelineModal").style.display = "flex";
+
+        try {
+          const res = await fetch(`output/sessions/${sessionId}.json`);
+          if (!res.ok) throw new Error("File not found");
+          const timeline = await res.json();
+
+          container.innerHTML = "";
+          if (timeline.length === 0) {
+            container.innerHTML = "<p>No interaction data found.</p>";
+            return;
+          }
+
+          timeline.forEach(item => {
+            let html = `<div class="event ${item.type === "compaction" ? "compaction-event" : item.type}">`;
+
+            if (item.type === "compaction") {
+              html += `🧹 Context Limit Reached. Copilot automatically compacted history.`;
+            } else {
+              html += `<div class="event-header">
+                    <span class="event-type">${item.type === "user" ? "👤 User" : item.type === "assistant" ? "🤖 Assistant API Call" : "⚙️ Tool Execution"}</span>
+                    ${item.model ? `<span>Model: ${item.model}</span>` : ""}
+                </div>`;
+
+              if (item.type === "assistant") {
+                html += `<div class="event-content">${item.content}</div>`;
+                if (item.tools > 0) html += `<span class="tools-badge" style="display:inline-block; margin-top:5px;">Requested ${item.tools} Tool(s)</span>`;
+
+                const rates = costsData[item.model] || { costOutput: 15, costInput: 3 };
+                const estOutCost = (item.tokens / 1e6) * rates.costOutput;
+                const estInCost = (item.inputTokens / 1e6) * rates.costInput;
+                const totalTurnCost = estOutCost + estInCost;
+
+                html += `<div style="margin-top: 10px;">`;
+
+                // Flag massive Input Payloads
+                if (item.inputTokens > 35000) {
+                  html += `<div class="spike-badge spike-input">🚨 Input Spike: ${item.inputTokens.toLocaleString("de-DE")} Tokens (≈ ${formatCurrency(estInCost)})</div>`;
+                }
+                // Flag massive Output Payloads
+                if (item.tokens > 1000) {
+                  html += `<div class="spike-badge spike-output">🚨 Output Spike: ${item.tokens.toLocaleString("de-DE")} Tokens (≈ ${formatCurrency(estOutCost)})</div>`;
+                }
+
+                // Always show the standard stats for the turn
+                html += `<div style="font-size:0.8em; color:#666; margin-top:8px;">
+                        Turn Estimated Payload: <strong>In: ${item.inputTokens.toLocaleString("de-DE")}</strong> | Out: ${item.tokens.toLocaleString("de-DE")} | Turn Cost: ${formatCurrency(totalTurnCost)}
+                    </div>`;
+                html += `</div>`;
+              } else if (item.type === "tool") {
+                html += `<div class="event-content" style="color: ${item.success ? "#2e7d32" : "#c62828"};">
+                        ${item.success ? "✅ Execution Complete" : "❌ Execution Failed"}
+                    </div>`;
+                // Flag tools that read massive files into context
+                if (item.addedTokens > 15000) {
+                  html += `<div class="spike-badge spike-tool">⚠️ Massive Tool Read: Dumped ~${item.addedTokens.toLocaleString("de-DE")} tokens into context history</div>`;
+                } else if (item.addedTokens > 0) {
+                  html += `<div style="font-size:0.8em; color:#888; margin-top:5px;">Added ~${item.addedTokens.toLocaleString("de-DE")} tokens to context</div>`;
+                }
+              } else {
+                html += `<div class="event-content">"${item.content}"</div>`;
+              }
+            }
+            html += `</div>`;
+            container.innerHTML += html;
+          });
+        } catch (e) {
+          container.innerHTML = `<p style="color:red;">Could not load timeline data. Did you run the updated node analyzer script?</p>`;
+        }
+      }
+
+      function closeModal() {
+        document.getElementById("timelineModal").style.display = "none";
+      }
+      init();
+    </script>
+  </body>
+</html>
